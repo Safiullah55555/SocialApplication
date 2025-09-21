@@ -17,6 +17,8 @@ import { format } from "date-fns";
 import { CalendarIcon, EditIcon, FileTextIcon, HeartIcon, LinkIcon, MapPinIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import EditProfilePic from "@/components/ImageUpload";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type User = Awaited<ReturnType<typeof getProfileByUsername>>
 type Posts = Awaited<ReturnType<typeof getUserPosts>>
@@ -40,6 +42,7 @@ const ProfilePageClient = ({ isFollowing: initialIsFollowing, likedPosts, posts,
                 bio: user.bio || "",
                 location: user.location || "",
                 website: user.website || "",
+                image: user.image || ""
         });
 
         const handleEditSubmit = async () => {
@@ -53,6 +56,13 @@ const ProfilePageClient = ({ isFollowing: initialIsFollowing, likedPosts, posts,
                         setShowEditDialog(false);
                         toast.success("Profile updated successfully");
                 }
+
+
+        };
+        // handle image changes
+        const handleImageChange = (url: string) => {
+                setEditForm({ ...editForm, image: url });
+
         };
 
         const handleFollow = async () => {
@@ -84,8 +94,8 @@ const ProfilePageClient = ({ isFollowing: initialIsFollowing, likedPosts, posts,
                                                 <CardContent className="pt-6">
                                                         <div className="flex flex-col items-center text-center">
                                                                 <Avatar className="w-24 h-24">
-                                                                        <AvatarImage src={user.image ?? "/avatar.png"} />
-                                                                </Avatar>
+                                                                        {/* <AvatarImage src={user.image ?? "/avatar.png"} /> */}
+                                                                        <AvatarImage src={user.image ? user.image : "/avatar.png"} />                                                                </Avatar>
                                                                 <h1 className="mt-4 text-2xl font-bold">{user.name ?? user.username}</h1>
                                                                 <p className="text-muted-foreground">@{user.username}</p>
                                                                 <p className="mt-2 text-sm">{user.bio}</p>
@@ -206,50 +216,78 @@ const ProfilePageClient = ({ isFollowing: initialIsFollowing, likedPosts, posts,
                                 </Tabs>
 
                                 <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-                                        <DialogContent className="sm:max-w-[500px]">
+                                        <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
                                                 <DialogHeader>
                                                         <DialogTitle>Edit Profile</DialogTitle>
                                                 </DialogHeader>
-                                                <div className="space-y-4 py-4">
-                                                        <div className="space-y-2">
-                                                                <Label>Name</Label>
-                                                                <Input
-                                                                        name="name"
-                                                                        value={editForm.name}
-                                                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                                                        placeholder="Your name"
-                                                                />
+
+                                                {/* Scrollable area */}
+                                                <ScrollArea className="flex-1 overflow-y-auto pr-4">
+                                                        <div className="space-y-4 py-4">
+                                                                <div className="space-y-2">
+                                                                        <Label>Name</Label>
+                                                                        <Input
+                                                                                name="name"
+                                                                                value={editForm.name}
+                                                                                onChange={(e) =>
+                                                                                        setEditForm({ ...editForm, name: e.target.value })
+                                                                                }
+                                                                                placeholder="Your name"
+                                                                        />
+                                                                </div>
+
+                                                                <div className="space-y-2">
+                                                                        <Label>Profile Picture</Label>
+                                                                        <EditProfilePic
+                                                                                endpoint="profileImage"
+                                                                                onchange={handleImageChange}
+                                                                                value={editForm.image}
+
+
+                                                                        />
+                                                                </div>
+
+                                                                <div className="space-y-2">
+                                                                        <Label>Bio</Label>
+                                                                        <Textarea
+                                                                                name="bio"
+                                                                                value={editForm.bio}
+                                                                                onChange={(e) =>
+                                                                                        setEditForm({ ...editForm, bio: e.target.value })
+                                                                                }
+                                                                                className="min-h-[100px]"
+                                                                                placeholder="Tell us about yourself"
+                                                                        />
+                                                                </div>
+
+                                                                <div className="space-y-2">
+                                                                        <Label>Location</Label>
+                                                                        <Input
+                                                                                name="location"
+                                                                                value={editForm.location}
+                                                                                onChange={(e) =>
+                                                                                        setEditForm({ ...editForm, location: e.target.value })
+                                                                                }
+                                                                                placeholder="Where are you based?"
+                                                                        />
+                                                                </div>
+
+                                                                <div className="space-y-2">
+                                                                        <Label>Website</Label>
+                                                                        <Input
+                                                                                name="website"
+                                                                                value={editForm.website}
+                                                                                onChange={(e) =>
+                                                                                        setEditForm({ ...editForm, website: e.target.value })
+                                                                                }
+                                                                                placeholder="Your personal website"
+                                                                        />
+                                                                </div>
                                                         </div>
-                                                        <div className="space-y-2">
-                                                                <Label>Bio</Label>
-                                                                <Textarea
-                                                                        name="bio"
-                                                                        value={editForm.bio}
-                                                                        onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                                                                        className="min-h-[100px]"
-                                                                        placeholder="Tell us about yourself"
-                                                                />
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                                <Label>Location</Label>
-                                                                <Input
-                                                                        name="location"
-                                                                        value={editForm.location}
-                                                                        onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
-                                                                        placeholder="Where are you based?"
-                                                                />
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                                <Label>Website</Label>
-                                                                <Input
-                                                                        name="website"
-                                                                        value={editForm.website}
-                                                                        onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
-                                                                        placeholder="Your personal website"
-                                                                />
-                                                        </div>
-                                                </div>
-                                                <div className="flex justify-end gap-3">
+                                                </ScrollArea>
+
+                                                {/* Footer actions */}
+                                                <div className="flex justify-end gap-3 pt-4">
                                                         <DialogClose asChild>
                                                                 <Button variant="outline">Cancel</Button>
                                                         </DialogClose>

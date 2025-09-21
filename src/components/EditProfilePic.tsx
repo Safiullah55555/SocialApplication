@@ -3,6 +3,7 @@
 import { UploadButton, UploadDropzone } from "@/lib/uploadthing"
 import { XIcon } from "lucide-react"
 import { useState } from "react"
+import { useUser } from "@clerk/nextjs" // Adjust if you use a different auth system
 
 interface ImageUploadProps {
   onchange: (url: string) => void
@@ -11,17 +12,39 @@ interface ImageUploadProps {
 }
 export type { ImageUploadProps }
 
-const ImageUpload = ({ endpoint, onchange, value }: ImageUploadProps) => {
+const EditProfilePic = ({ endpoint, onchange, value }: ImageUploadProps) => {
   const [fileKey, setFileKey] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const { user } = useUser() // Get current user
 
   const handleDelete = async () => {
-    if (fileKey) {
+    let keyToDelete = fileKey
+
+    // If fileKey is not set, fetch from DB using user id
+    if (!keyToDelete && user?.id) {
+      try {
+        const res = await fetch(`/api/user/${user.id}`)
+        if (res.ok) {
+          const dbUser = await res.json()
+          keyToDelete = dbUser.imageKey
+        }
+      } catch (err) {
+        console.error("Failed to fetch user for imageKey", err)
+      }
+    }
+
+    // Fallback: try to extract from URL
+    if (!keyToDelete && value) {
+      keyToDelete = value.split("/").pop()?.split("?")[0] || null
+    }
+
+    if (keyToDelete) {
       await fetch("/api/delete-upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: fileKey }),
+        body: JSON.stringify({ key: keyToDelete }),
       })
+      // Optionally: clear imageKey in DB here
     }
     onchange("")
     setFileKey(null)
@@ -123,4 +146,4 @@ const ImageUpload = ({ endpoint, onchange, value }: ImageUploadProps) => {
   )
 }
 
-export default ImageUpload
+export default EditProfilePic

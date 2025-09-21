@@ -32,6 +32,30 @@ export const ourFileRouter = {
         throw error;
       }
     }),
+    //endpoint/route for profile images.
+    profileImage: f({
+      image:{
+        maxFileSize: "4MB",
+        maxFileCount: 1,
+      },
+    })
+    .middleware(async ()=>{
+      const {userId} = await auth()
+      if(!userId) throw new Error("Unauthorized")
+      return {userId}
+    })
+    .onUploadComplete(async({metadata, file})=>{
+      try{
+        return{
+          url: file.url,
+          key: file.key
+        };
+      }catch(error){
+        console.error("Error in onUploadComplete edit profile:", error);
+        throw error;
+      }
+    })
+    
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;

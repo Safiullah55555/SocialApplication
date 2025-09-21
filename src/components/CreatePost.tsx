@@ -11,8 +11,12 @@ import { createPost } from "@/actions/post.action";
 import toast from "react-hot-toast";
 import ImageUpload from "./ImageUpload";
 
-const CreatePost = () => {
-        const { user } = useUser()
+interface CreatePostProps{
+        userImage?: string | null
+}
+
+const CreatePost = ({userImage}:CreatePostProps) => {
+        // const { user } = useUser()
         const [content, setContent] = useState("")
         const [imageUrl, setImageUrl] = useState("")
         const [isPosting, setIsPosting] = useState(false)
@@ -48,7 +52,8 @@ const CreatePost = () => {
                                 <div className="space-y-4">
                                         <div className="flex space-x-5">
                                                 <Avatar className="w-10 h-10">
-                                                        <AvatarImage src={user?.imageUrl || "/avatar.png"} />
+                                                        {/* <AvatarImage src={user?.imageUrl || "/avatar.png"} /> */}
+                                                        <AvatarImage src={userImage || "/avatar.png"} />
                                                 </Avatar>
                                                 <Textarea
                                                         placeholder="What's on your mind?"

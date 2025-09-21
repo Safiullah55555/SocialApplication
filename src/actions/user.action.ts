@@ -1,8 +1,9 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
+// import { deleteUpload } from "@/lib/uploadthing"
 import { auth, currentUser } from "@clerk/nextjs/server"
-import { stat } from "fs"
+// import { stat } from "fs"
 import { revalidatePath } from "next/cache"
 
 export async function syncUser() {
@@ -156,3 +157,51 @@ export async function toggleFollow(targetUserId: string) {
                 
         }
 }
+
+
+export async function getDbUserByClerkId(clerkId: string) {
+        return prisma.user.findUnique({
+                where: {
+                        clerkId: clerkId
+                },
+                select: {
+                        id: true,
+                        image: true
+                }
+        })
+}
+
+
+
+
+// export async function deleteProfileImageAndCleanup() {
+//   try {
+//     const { userId: clerkId } = await auth();
+//     if (!clerkId) throw new Error("Unauthorized");
+
+//     // Get current user and their old imageKey
+//     const user = await prisma.user.findUnique({
+//       where: { clerkId },
+//       select: { imageKey: true },
+//     });
+
+//     // Delete old image from UploadThing if it exists
+//     if (user?.imageKey) {
+//       await deleteUpload(user.imageKey);
+//     }
+
+//     // Update user with image and key cleared
+//     await prisma.user.update({
+//       where: { clerkId },
+//       data: {
+//         image: null,
+//         imageKey: null,
+//       },
+//     });
+
+//     return { success: true };
+//   } catch (error) {
+//     console.error("Error deleting profile image:", error);
+//     return { success: false, error: "Failed to delete profile image" };
+//   }
+// }

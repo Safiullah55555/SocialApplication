@@ -1,11 +1,12 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { PrismaClient } from "@prisma/client";
+// import { PrismaClient } from "@prisma/client";
 // const prisma = new PrismaClient();
 import { revalidatePath } from "next/cache";
 import { getDbUserId } from "./user.action";
 import { prisma } from "@/lib/prisma";
+// import {deleteUpload} from "@/lib/uploadthing" 
 
 export async function getProfileByUsername(usernameOrname: string) {
   try {
@@ -164,6 +165,8 @@ export async function updateProfile(formData: FormData) {
     const bio = formData.get("bio") as string;
     const location = formData.get("location") as string;
     const website = formData.get("website") as string;
+    const image = formData.get("image") as string;
+    const imageKey = formData.get("imageKey") as string | undefined;
 
     const user = await prisma.user.update({
       where: { clerkId },
@@ -172,6 +175,8 @@ export async function updateProfile(formData: FormData) {
         bio,
         location,
         website,
+        image,
+        imageKey,
       },
     });
 

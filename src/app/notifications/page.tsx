@@ -84,7 +84,7 @@ const page = () => {
                                                                 >
                                                                         <Link href={`/profile/${notification.creator.username}`}>
                                                                         <Avatar className="mt-1">   
-                                                                                <AvatarImage src={notification.creator.image ?? "/avatar.png"} />
+                                                                                <AvatarImage src={notification.creator.image ? notification.creator.image : "/avatar.png"} />
                                                                         </Avatar>
                                                                         </Link>
 

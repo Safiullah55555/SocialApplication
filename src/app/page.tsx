@@ -1,5 +1,5 @@
 import { getPosts } from "@/actions/post.action";
-import { getDbUserId } from "@/actions/user.action";
+import { getDbUserByClerkId, getDbUserId } from "@/actions/user.action";
 import CreatePost from "@/components/CreatePost";
 import PostCard from "@/components/PostCard";
 import WhoToFOllow from "@/components/WhoToFOllow";
@@ -9,6 +9,7 @@ export default async function Home() {
   const user = await currentUser();
   const posts = await getPosts()
   const dbUserId = await getDbUserId()
+  const dbUser= user ? await getDbUserByClerkId(user.id):null
 
   console.log({posts})
 
@@ -16,7 +17,7 @@ export default async function Home() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
       <div className="lg:col-span-6">
-        {user ? <CreatePost/> : null}
+        {user ? <CreatePost userImage={dbUser?.image} /> : null}
 
         <div className="space-y-6">
           {posts.map((post)=>(

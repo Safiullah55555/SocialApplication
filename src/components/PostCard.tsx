@@ -31,7 +31,7 @@ const PostCard = ({ post, dbUserId }: { post: Post; dbUserId: string | null }) =
   const [optimisticLikes, setOptimisticLikes] = useState(post._count.likes)
   const [showComments, setShowComments] = useState(false);
 
-  const [fileKey, setFileKey] = useState<string | null>(null)
+  // const [fileKey, setFileKey] = useState<string | null>(null)
 
 
 
@@ -108,7 +108,7 @@ const PostCard = ({ post, dbUserId }: { post: Post; dbUserId: string | null }) =
           <div className="flex space-x-3 sm:space-x-4">
             <Link href={`/profile/${post.author.username}`}>
               <Avatar className="size-8 sm:w-10 sm:h-10">
-                <AvatarImage src={post.author.image ?? "/avatar.png"} />
+                <AvatarImage src={post.author.image ? post.author.image : "/avatar.png"} />
               </Avatar>
             </Link>
 
@@ -192,7 +192,7 @@ const PostCard = ({ post, dbUserId }: { post: Post; dbUserId: string | null }) =
                 {post.comments.map((comment) => (
                   <div key={comment.id} className="flex space-x-3">
                     <Avatar className="size-8 flex-shrink-0">
-                      <AvatarImage src={comment.author.image ?? "/avatar.png"} />
+                      <AvatarImage src={comment.author.image ? comment.author.image : "/avatar.png"} />
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -212,10 +212,11 @@ const PostCard = ({ post, dbUserId }: { post: Post; dbUserId: string | null }) =
               </div>
 
               {user ? (
-                <div className="flex space-x-3">
-                  <Avatar className="size-8 flex-shrink-0">
+                <div className="flex space-x-3">    
+               
+                  {/* <Avatar className="size-8 flex-shrink-0">
                     <AvatarImage src={user?.imageUrl || "/avatar.png"} />
-                  </Avatar>
+                  </Avatar> */}                  
                   <div className="flex-1">
                     <Textarea
                       placeholder="Write a comment..."

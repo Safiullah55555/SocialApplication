@@ -22,6 +22,7 @@ model User{
   name String?
   bio String?
   image String?
+  imageKey String? //to store the key of the image in uploadthing
   location String?
   website String? //TODO: remove later
   createdAt DateTime @default(now()) //member since 2025
