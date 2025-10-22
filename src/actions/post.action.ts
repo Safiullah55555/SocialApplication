@@ -215,3 +215,84 @@ export async function deletePost(postId: string) {
     return { success: false, error: "Failed to delete post" };
   }
 }
+
+export async function editPost(postId: string, content: string, ) {
+  try {
+    const userId = await getDbUserId();
+    if (!userId) return { success: false, error: "Unauthorized" };
+
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { authorId: true},
+    });
+
+    if (!post) return { success: false, error: "Post not found" };
+    if (post.authorId !== userId) return { success: false, error: "Unauthorized - no edit permission" };
+
+   
+
+    const updatedPost = await prisma.post.update({
+      where: { id: postId },
+      data: { content },
+    });
+
+    revalidatePath("/"); // Purge cache
+    return { success: true, post: updatedPost };
+  } catch (error) {
+    console.error("Error editing post:", error);
+    return { success: false, error: "Failed to edit post" };
+  }
+}
+
+
+export async function editComment(commentId: string, content: string) {
+  try {
+    const userId = await getDbUserId();
+    if (!userId) return { success: false, error: "Unauthorized" };
+
+    const comment = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { authorId: true },
+    });
+
+    if (!comment) return { success: false, error: "Comment not found" };
+    if (comment.authorId !== userId) return { success: false, error: "Unauthorized - no edit permission" };
+
+    const updatedComment = await prisma.comment.update({
+      where: { id: commentId },
+      data: { content },
+    });
+
+    revalidatePath("/"); // Purge cache
+    return { success: true, comment: updatedComment };
+  } catch (error) {
+    console.error("Error editing comment:", error);
+    return { success: false, error: "Failed to edit comment" };
+  }
+}
+
+
+export async function deleteComment(commentId: string) {
+  try {
+    const userId = await getDbUserId();
+    if (!userId) return { success: false, error: "Unauthorized" };
+
+    const comment = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { authorId: true },
+    });
+
+    if (!comment) return { success: false, error: "Comment not found" };
+    if (comment.authorId !== userId) return { success: false, error: "Unauthorized - no delete permission" };
+
+    await prisma.comment.delete({
+      where: { id: commentId },
+    });
+
+    revalidatePath("/"); // Purge cache
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    return { success: false, error: "Failed to delete comment" };
+  }
+}

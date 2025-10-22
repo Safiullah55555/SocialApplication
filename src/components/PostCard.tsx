@@ -1,6 +1,5 @@
 "use client"
-import { createComment, deletePost, getPosts, toggleLike } from '@/actions/post.action';
-// import { Post } from '@/generated/prisma'
+import { createComment, deletePost, getPosts, toggleLike,editPost,editComment,deleteComment } from '@/actions/post.action';
 import { SignInButton, useUser } from '@clerk/nextjs';
 import React, { useState } from 'react'
 import toast from 'react-hot-toast';
@@ -10,9 +9,21 @@ import { Avatar, AvatarImage } from './ui/avatar';
 import { formatDistanceToNow } from "date-fns"
 import { DeleteAlertDialog } from './DeleteAlertDialog';
 import { Button } from './ui/button';
-import { HeartIcon, LogInIcon, MessageCircleIcon, SendIcon } from 'lucide-react';
+import { HeartIcon, LogInIcon, MessageCircleIcon, SendIcon, Edit2Icon,Ellipsis,Trash2Icon } from 'lucide-react';
 import { Textarea } from './ui/textarea';
-// import { ImageUploadProps } from "@/components/ImageUpload"
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { Loader2Icon } from "lucide-react";
+
 
 type Posts = Awaited<ReturnType<typeof getPosts>>
 type Post = Posts[number]
@@ -30,11 +41,80 @@ const PostCard = ({ post, dbUserId }: { post: Post; dbUserId: string | null }) =
   const [hasLiked, setHasLiked] = useState(post.likes.some(like => like.userId === dbUserId))
   const [optimisticLikes, setOptimisticLikes] = useState(post._count.likes)
   const [showComments, setShowComments] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editCommentContent, setEditCommentContent] = useState("");
+  const [isUpdatingComment, setIsUpdatingComment] = useState(false);
 
-  // const [fileKey, setFileKey] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content || "");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeletingComment, setIsDeletingComment] = useState(false);
+  const [deleteDialogCommentId, setDeleteDialogCommentId] = useState<string | null>(null);
+
+  // delete comment handler.
+const handleDeleteComment = async (commentId: string | null) => {
+  if (!commentId || isDeletingComment) return;
+  try {
+    setIsDeletingComment(true);
+    const result = await deleteComment(commentId);
+    if (result?.success) {
+      toast.success("Comment deleted successfully");
+      // Optimistically remove comment from UI
+      post.comments = post.comments.filter(c => c.id !== commentId);
+      setDeleteDialogCommentId(null);
+    } else {
+      toast.error(result?.error || "Failed to delete comment");
+    }
+  } catch (error) {
+    toast.error("Failed to delete comment");
+  } finally {
+    setIsDeletingComment(false);
+  }
+};
 
 
-
+// edit comment handler
+const handleEditComment = async (commentId: string) => {
+  if (isUpdatingComment) return;
+  try {
+    setIsUpdatingComment(true);
+    const result = await editComment(commentId, editCommentContent);
+    if (result?.success) {
+      toast.success("Comment updated successfully");
+      setEditingCommentId(null);
+      // Optimistically update local comment
+      const comment = post.comments.find(c => c.id === commentId);
+      if (comment) comment.content = editCommentContent;
+    } else {
+      toast.error(result?.error || "Failed to update comment");
+    }
+  } catch (error) {
+    toast.error("Failed to update comment");
+  } finally {
+    setIsUpdatingComment(false);
+  }
+};
+// Edit handler. 
+const handleEditPost = async () => {
+  if (isUpdating) return;
+  try {
+    setIsUpdating(true);
+    const result = await editPost(post.id, editContent);
+    if (result?.success) {
+      toast.success("Post updated successfully");
+      setIsEditing(false);
+      // Optimistically update local state (scalable for no full re-render)
+      post.content = editContent;
+      // post.image = editImageUrl;
+    } else {
+      toast.error(result?.error || "Failed to update post");
+    }
+  } catch (error) {
+    toast.error("Failed to update post");
+  } finally {
+    setIsUpdating(false);
+  }
+};
 
   const handleLike = async () => {
     if (isLiking) return
@@ -130,11 +210,37 @@ const PostCard = ({ post, dbUserId }: { post: Post; dbUserId: string | null }) =
                 </div>
                 {/* Check if current user is the post author */}
                 {dbUserId === post.author.id && (
-                  <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} />
+                  <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} onEdit={() => setIsEditing(true)} />
 
                 )}
               </div>
-              <p className="mt-2 text-sm text-foreground break-words">{post.content}</p>
+              {isEditing ? (
+                <div className="space-y-2">
+                  <Textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="min-h-[50px] resize-none"
+                    placeholder="Edit your post..."
+                  />
+                  {/* {editImageUrl && (
+                    <div className="border rounded-lg p-4 flex justify-center">
+                      <ImageUpload
+                        endpoint="postImage"
+                        value={editImageUrl}
+                        onchange={(url) => setEditImageUrl(url)}
+                      />
+                    </div>
+                  } */}
+                  <div className="flex justify-end space-x-2">
+                    <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+                    <Button size="sm" onClick={handleEditPost} disabled={isUpdating}>
+                      {isUpdating ? "Updating..." : "Save"}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-foreground break-words">{post.content}</p>
+              )}
             </div>
           </div>
 
@@ -195,6 +301,7 @@ const PostCard = ({ post, dbUserId }: { post: Post; dbUserId: string | null }) =
                       <AvatarImage src={comment.author.image ? comment.author.image : "/avatar.png"} />
                     </Avatar>
                     <div className="flex-1 min-w-0">
+                      {/* flex-1 min-w-0 */}
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="font-medium text-sm">{comment.author.name}</span>
                         <span className="text-sm text-muted-foreground">
@@ -205,16 +312,104 @@ const PostCard = ({ post, dbUserId }: { post: Post; dbUserId: string | null }) =
                           {formatDistanceToNow(new Date(comment.createdAt))} ago
                         </span>
                       </div>
-                      <p className="text-sm break-words">{comment.content}</p>
+
+                      {/* header is above, show content row with right-aligned 3-dot menu */}
+                      <div className="flex items-start justify-between mt-1">
+                        {/* comment text (take remaining width) */}
+                        <div className="flex-1 min-w-0">
+                          {editingCommentId === comment.id ? (
+                            <div className="space-y-2">
+                              <Textarea
+                                value={editCommentContent}
+                                onChange={(e) => setEditCommentContent(e.target.value)}
+                                className="min-h-[50px] resize-none"
+                                placeholder="Edit your comment..."
+                              />
+                              <div className="flex justify-end space-x-2">
+                                <Button size="sm" variant="outline" onClick={() => setEditingCommentId(null)}>Cancel</Button>
+                                <Button size="sm" onClick={() => handleEditComment(comment.id)} disabled={isUpdatingComment}>
+                                  {isUpdatingComment ? "Updating..." : "Save"}
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm break-words">{comment.content}</p>
+                          )}
+                        </div>
+
+                        {/* three-dot menu always aligned to the right of the comment row */}
+                        {dbUserId === comment.author.id && editingCommentId !== comment.id && (
+                          <div className="ml-2 flex-shrink-0">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-muted-foreground hover:text-primary p-0"
+                                >
+                                  <Ellipsis className="size-4" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 space-y-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-full justify-start text-red-500 hover:text-red-600"
+                                  onClick={() => setDeleteDialogCommentId(comment.id)}
+                                  disabled={isDeletingComment}
+                                >
+                                  <Trash2Icon className="size-4 mr-2" />
+                                  Delete
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-full justify-start text-white hover:text-primary"
+                                  onClick={() => {
+                                    setEditingCommentId(comment.id)
+                                    setEditCommentContent(comment.content)
+                                  }}
+                                >
+                                  <Edit2Icon className="size-4 mr-2" />
+                                  Edit
+                                </Button>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                ))}
+                ))} 
+                {/* Comment delete confirmation dialog (shared for all comments) */}
+                <AlertDialog
+                  open={!!deleteDialogCommentId}
+                  onOpenChange={(open) => {
+                    if (!open) setDeleteDialogCommentId(null);
+                  }}
+                >
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Comment</AlertDialogTitle>
+                      <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel disabled={isDeletingComment}>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-red-500 hover:bg-red-600"
+                        onClick={() => handleDeleteComment(deleteDialogCommentId)}
+                        disabled={isDeletingComment}
+                      >
+                        {isDeletingComment ? <Loader2Icon className="size-4 animate-spin" /> : "Delete"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
 
               {user ? (
                 <div className="flex space-x-3">    
-               
-                  {/* <Avatar className="size-8 flex-shrink-0">
+                {/* <Avatar className="size-8 flex-shrink-0">
                     <AvatarImage src={user?.imageUrl || "/avatar.png"} />
                   </Avatar> */}                  
                   <div className="flex-1">

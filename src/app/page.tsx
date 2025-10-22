@@ -11,7 +11,7 @@ export default async function Home() {
   const dbUserId = await getDbUserId()
   const dbUser= user ? await getDbUserByClerkId(user.id):null
 
-  console.log({posts})
+  // console.log({posts})
 
 
   return (

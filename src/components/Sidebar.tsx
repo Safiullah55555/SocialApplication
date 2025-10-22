@@ -16,7 +16,7 @@ const Sidebar = async () => {
         const user =  await getUserByClerkId(authUser.id) //Post (server action).
         if (!user) return null;
 
-        console.log({user})
+        // console.log({user})
 
   return (
     <div className='sticky to-20%'>

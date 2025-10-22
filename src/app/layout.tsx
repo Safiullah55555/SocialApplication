@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { Toaster } from "react-hot-toast"
 import { Analytics } from '@vercel/analytics/next';
+import ClientWrapper from "@/components/ClientWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,6 +51,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <ClientWrapper>
+
+            
             <div className="min-h-screen">
               <Navbar />
               <main className="py-8">
@@ -68,6 +72,7 @@ export default function RootLayout({
               </main>
             </div>
             <Toaster/>
+            </ClientWrapper>
           </ThemeProvider>
         </body>
       </html>

@@ -8,7 +8,7 @@ import { SignInButton, UserButton } from '@clerk/nextjs'
 
 const  DesktopNavbar = async () => {
         const user=await currentUser()
-        console.log("user here : ",user)
+        // console.log("user here : ",user)
   return (
     <div className="hidden md:flex items-center space-x-4">
       <ModeToggle />
