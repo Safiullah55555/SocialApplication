@@ -91,7 +91,15 @@ export async function getUserPosts(userId: string) {
       },
     });
 
-    return posts;
+    // Transform to match Post type (createdAt as string, comments createdAt as string)
+    return posts.map(post => ({
+      ...post,
+      createdAt: post.createdAt.toISOString(),
+      comments: post.comments.map(comment => ({
+        ...comment,
+        createdAt: comment.createdAt.toISOString()
+      }))
+    }));
   } catch (error) {
     console.error("Error fetching user posts:", error);
     throw new Error("Failed to fetch user posts");
@@ -149,7 +157,15 @@ export async function getUserLikedPosts(userId: string) {
       },
     });
 
-    return likedPosts;
+    // Transform to match Post type (createdAt as string, comments createdAt as string)
+    return likedPosts.map(post => ({
+      ...post,
+      createdAt: post.createdAt.toISOString(),
+      comments: post.comments.map(comment => ({
+        ...comment,
+        createdAt: comment.createdAt.toISOString()
+      }))
+    }));
   } catch (error) {
     console.error("Error fetching liked posts:", error);
     throw new Error("Failed to fetch liked posts");
