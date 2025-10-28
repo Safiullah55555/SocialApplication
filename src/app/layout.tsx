@@ -32,7 +32,7 @@ export const metadata: Metadata = {
       { rel: "icon", url: "/android-chrome-512x512.png", sizes: "512x512" },
     ],
   },
-  keywords:["Social App","Social Media","Next.js","Clerk","Authentication","User Profiles","Posts","Comments","Likes","Real-time Updates","socialmediaapp","socialapp"],
+  keywords: ["Social App", "Social Media", "Next.js", "Clerk", "Authentication", "User Profiles", "Posts", "Comments", "Likes", "Real-time Updates", "socialmediaapp", "socialapp"],
   authors: [{ name: "Safi ullah", url: "https://safisu.vercel.app/" }],
 };
 
@@ -44,6 +44,9 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        </head>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <ThemeProvider
             attribute="class"
@@ -53,25 +56,25 @@ export default function RootLayout({
           >
             <ClientWrapper>
 
-            
-            <div className="min-h-screen">
-              <Navbar />
-              <main className="py-8">
-                <div className="max-w-7xl mx-auto px-4">
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div className="hidden lg:block lg:col-span-3">
-                    <Sidebar/>
-                    </div>
-                    <div className="lg:col-span-9">
-                      {children}
-                       <Analytics />
-                    </div>
-                  </div>
 
-                </div>
-              </main>
-            </div>
-            <Toaster/>
+              <div className="min-h-screen">
+                <Navbar />
+                <main className="py-8">
+                  <div className="max-w-7xl mx-auto px-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                      <div className="hidden lg:block lg:col-span-3">
+                        <Sidebar />
+                      </div>
+                      <div className="lg:col-span-9">
+                        {children}
+                        <Analytics />
+                      </div>
+                    </div>
+
+                  </div>
+                </main>
+              </div>
+              <Toaster />
             </ClientWrapper>
           </ThemeProvider>
         </body>

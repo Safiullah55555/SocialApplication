@@ -54,7 +54,20 @@ export const ourFileRouter = {
         console.error("Error in onUploadComplete edit profile:", error);
         throw error;
       }
+    }),
+    //fro video uploads
+    videoUploader: f({
+    video: { maxFileSize: "8MB", maxFileCount: 1 },
+  })
+    .middleware(async () => {
+      const { userId } = await auth();
+      if (!userId) throw new Error("Unauthorized");
+      return { userId };
     })
+    .onUploadComplete(async ({ metadata, file }) => ({
+      url: file.url,
+      key: file.key,
+    })),
     
 } satisfies FileRouter;
 

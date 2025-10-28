@@ -57,9 +57,9 @@ function MobileNavbar() {
 
                         <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
                                 <SheetTrigger asChild>
-                                        <Button variant="ghost" size="icon">
-                                                <MenuIcon className="h-5 w-5" />
-                                        </Button>
+                                        {/* <Button variant="ghost" className="w-12 h-12"> */}
+                                                <MenuIcon aria-label="button" type="button" className="w-8 h-8"/>
+                                        {/* </Button> */}
                                 </SheetTrigger>
                                 <SheetContent side="right" className="w-[300px]">
                                         <SheetHeader>

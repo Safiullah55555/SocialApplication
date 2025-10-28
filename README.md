@@ -1,6 +1,6 @@
 # SocialApp
 
-A social media web application built with Next.js, React, and TypeScript. This app features user authentication, posting with images, comments, likes, notifications, search users, edit profile and a following system.
+A social media web application built with Next.js 15, React, and TypeScript. This app features user authentication, posting with images and videos, comments, edit & delete comments and posts, likes, notifications, search users, edit profile and a following system.
 
 ## visit live : https://social-application-omega.vercel.app/
 ## Technologies Used
@@ -18,8 +18,8 @@ A social media web application built with Next.js, React, and TypeScript. This a
 ## Features
 
 - User authentication and profile management
-- Create and delete posts with optional images
-- Like and comment on posts
+- Create, edit and delete posts with optional images
+- Like and comment(and edit/delete) on posts
 - Follow other users
 - Real-time notifications for likes, comments, and follows
 - Responsive design for desktop and mobile

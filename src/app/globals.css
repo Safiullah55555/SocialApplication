@@ -122,3 +122,16 @@
 }
 
 
+
+/* app/globals.css */
+
+
+
+/* Mobile: Increase font size only on small screens */
+@media (max-width: 768px) {
+  html {
+    font-size: 17px; /* Or 17.5px, 1.0625rem, etc. */
+  }
+}
+
+

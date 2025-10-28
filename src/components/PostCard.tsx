@@ -1,5 +1,5 @@
 "use client"
-import { createComment, deletePost, getPosts, toggleLike,editPost,editComment,deleteComment } from '@/actions/post.action';
+import { createComment, deletePost, getPosts, toggleLike, editPost, editComment, deleteComment } from '@/actions/post.action';
 import { SignInButton, useUser } from '@clerk/nextjs';
 import React, { useState } from 'react'
 import toast from 'react-hot-toast';
@@ -9,7 +9,7 @@ import { Avatar, AvatarImage } from './ui/avatar';
 import { formatDistanceToNow } from "date-fns"
 import { DeleteAlertDialog } from './DeleteAlertDialog';
 import { Button } from './ui/button';
-import { HeartIcon, LogInIcon, MessageCircleIcon, SendIcon, Edit2Icon,Ellipsis,Trash2Icon } from 'lucide-react';
+import { HeartIcon, LogInIcon, MessageCircleIcon, SendIcon, Edit2Icon, Ellipsis, Trash2Icon } from 'lucide-react';
 import { Textarea } from './ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import {
@@ -23,15 +23,53 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { Loader2Icon } from "lucide-react";
+import PostMedia from './subComponents/PostMedia';
 
 
-type Posts = Awaited<ReturnType<typeof getPosts>>
-type Post = Posts[number]
+// type Posts = Awaited<ReturnType<typeof getPosts>>
+// type Post = Posts[number]
+
+export type Post = {
+  id: string;
+  content: string | null;
+  createdAt: string;
+  image?: string | null;
+  author: {
+    id: string;
+    name: string | null;
+    username: string;
+    image?: string | null;
+  };
+  likes: { userId: string }[];
+  comments: {
+    id: string;
+    content: string;
+    createdAt: string;
+    author: {
+      id: string;
+      name: string | null;
+      username: string;
+      image?: string | null;
+    };
+  }[];
+  _count: {
+    likes: number;
+    comments: number;
+  };
+};
 
 
-
-
-const PostCard = ({ post, dbUserId }: { post: Post; dbUserId: string | null }) => {
+const PostCard = ({
+  post,
+  dbUserId,
+  onEdit,
+  onDelete,
+}: {
+  post: Post;
+  dbUserId: string | null;
+  onEdit?: (id: string, content: string) => void;
+  onDelete?: (id: string) => void;
+}) => {
   const { user } = useUser()
 
   const [newComment, setNewComment] = useState("")
@@ -52,69 +90,71 @@ const PostCard = ({ post, dbUserId }: { post: Post; dbUserId: string | null }) =
   const [deleteDialogCommentId, setDeleteDialogCommentId] = useState<string | null>(null);
 
   // delete comment handler.
-const handleDeleteComment = async (commentId: string | null) => {
-  if (!commentId || isDeletingComment) return;
-  try {
-    setIsDeletingComment(true);
-    const result = await deleteComment(commentId);
-    if (result?.success) {
-      toast.success("Comment deleted successfully");
-      // Optimistically remove comment from UI
-      post.comments = post.comments.filter(c => c.id !== commentId);
-      setDeleteDialogCommentId(null);
-    } else {
-      toast.error(result?.error || "Failed to delete comment");
+  const handleDeleteComment = async (commentId: string | null) => {
+    if (!commentId || isDeletingComment) return;
+    try {
+      setIsDeletingComment(true);
+      const result = await deleteComment(commentId);
+      if (result?.success) {
+        toast.success("Comment deleted successfully");
+        // Optimistically remove comment from UI
+        post.comments = post.comments.filter(c => c.id !== commentId);
+        setDeleteDialogCommentId(null);
+      } else {
+        toast.error(result?.error || "Failed to delete comment");
+      }
+    } catch (error) {
+      toast.error("Failed to delete comment");
+    } finally {
+      setIsDeletingComment(false);
     }
-  } catch (error) {
-    toast.error("Failed to delete comment");
-  } finally {
-    setIsDeletingComment(false);
-  }
-};
+  };
 
 
-// edit comment handler
-const handleEditComment = async (commentId: string) => {
-  if (isUpdatingComment) return;
-  try {
-    setIsUpdatingComment(true);
-    const result = await editComment(commentId, editCommentContent);
-    if (result?.success) {
-      toast.success("Comment updated successfully");
-      setEditingCommentId(null);
-      // Optimistically update local comment
-      const comment = post.comments.find(c => c.id === commentId);
-      if (comment) comment.content = editCommentContent;
-    } else {
-      toast.error(result?.error || "Failed to update comment");
+  // edit comment handler
+  const handleEditComment = async (commentId: string) => {
+    if (isUpdatingComment) return;
+    try {
+      setIsUpdatingComment(true);
+      const result = await editComment(commentId, editCommentContent);
+      if (result?.success) {
+        toast.success("Comment updated successfully");
+        setEditingCommentId(null);
+        // Optimistically update local comment
+        const comment = post.comments.find(c => c.id === commentId);
+        if (comment) comment.content = editCommentContent;
+
+      } else {
+        toast.error(result?.error || "Failed to update comment");
+      }
+    } catch (error) {
+      toast.error("Failed to update comment");
+    } finally {
+      setIsUpdatingComment(false);
     }
-  } catch (error) {
-    toast.error("Failed to update comment");
-  } finally {
-    setIsUpdatingComment(false);
-  }
-};
-// Edit handler. 
-const handleEditPost = async () => {
-  if (isUpdating) return;
-  try {
-    setIsUpdating(true);
-    const result = await editPost(post.id, editContent);
-    if (result?.success) {
-      toast.success("Post updated successfully");
-      setIsEditing(false);
-      // Optimistically update local state (scalable for no full re-render)
-      post.content = editContent;
-      // post.image = editImageUrl;
-    } else {
-      toast.error(result?.error || "Failed to update post");
+  };
+  // Edit handler. 
+  const handleEditPost = async () => {
+    if (isUpdating) return;
+    try {
+      setIsUpdating(true);
+      const result = await editPost(post.id, editContent);
+      if (result?.success) {
+        toast.success("Post updated successfully");
+        setIsEditing(false);
+        // Optimistically update local state (scalable for no full re-render)
+        post.content = editContent;
+        onEdit?.(post.id, editContent);
+        // post.image = editImageUrl;
+      } else {
+        toast.error(result?.error || "Failed to update post");
+      }
+    } catch (error) {
+      toast.error("Failed to update post");
+    } finally {
+      setIsUpdating(false);
     }
-  } catch (error) {
-    toast.error("Failed to update post");
-  } finally {
-    setIsUpdating(false);
-  }
-};
+  };
 
   const handleLike = async () => {
     if (isLiking) return
@@ -133,21 +173,61 @@ const handleEditPost = async () => {
     }
   }
 
+  // const handleAddComment = async () => {
+  //   if (!newComment.trim() || isCommenting) return;
+  //   try {
+  //     setIsCommenting(true);
+  //     const result = await createComment(post.id, newComment);
+  //     if (result?.success) {
+  //       toast.success("Comment posted successfully");
+  //       setNewComment("");
+  //     }
+  //   } catch (error) {
+  //     toast.error("Failed to add comment");
+  //   } finally {
+  //     setIsCommenting(false);
+  //   }
+  // }
   const handleAddComment = async () => {
     if (!newComment.trim() || isCommenting) return;
+
+    const optimisticComment = {
+      id: "temp-" + Date.now(), // temporary ID
+      content: newComment,
+      createdAt: new Date().toISOString(),
+      author: {
+        id: dbUserId!,
+        name: user?.fullName || "You",
+        username: user?.username || "you",
+        image: user?.imageUrl || "/avatar.png",
+      },
+    };
+
+    // Add instantly to UI
+    post.comments = [optimisticComment, ...post.comments];
+
     try {
       setIsCommenting(true);
       const result = await createComment(post.id, newComment);
-      if (result?.success) {
-        toast.success("Comment posted successfully");
-        setNewComment("");
+      if (result?.success && result.comment) {
+        // Replace temp comment with real one
+        post.comments = post.comments.map(c =>
+          c.id === optimisticComment.id ? result.comment : c
+        );
+        toast.success("Comment posted!");
+      } else {
+        // Revert on failure
+        post.comments = post.comments.filter(c => c.id !== optimisticComment.id);
+        toast.error(result?.error || "Failed");
       }
     } catch (error) {
-      toast.error("Failed to add comment");
+      post.comments = post.comments.filter(c => c.id !== optimisticComment.id);
+      toast.error("Failed to post comment");
     } finally {
       setIsCommenting(false);
+      setNewComment("");
     }
-  }
+  };
   const handleDeletePost = async () => {
 
     if (isDeleting) return;
@@ -160,17 +240,18 @@ const handleEditPost = async () => {
 
       //delete from uploadthing
       if (post.image) {
-      const key = post.image.split("/").pop(); // extract only the file key
-      if (key) {
-        await fetch("/api/delete-upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key }),
-        });
+        const key = post.image.split("/").pop(); // extract only the file key
+        if (key) {
+          await fetch("/api/delete-upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key }),
+          });
+        }
       }
-    }
 
-       toast.success("Post deleted successfully");
+      toast.success("Post deleted successfully");
+      onDelete?.(post.id);
 
     } catch (error) {
       toast.error("Failed to delete post");
@@ -244,12 +325,14 @@ const handleEditPost = async () => {
             </div>
           </div>
 
-          {/* POST IMAGE */}
+          {/* POST IMAGE
           {post.image && (
             <div className="rounded-lg overflow-hidden">
               <img src={post.image} alt="Post content" className="w-full h-auto object-cover" />
             </div>
-          )}
+          )} */}
+          {post.image && <PostMedia src={post.image} className="mt-2" />}
+
 
           {/* LIKE & COMMENT BUTTONS */}
           <div className="flex items-center pt-2 space-x-4">
@@ -380,7 +463,7 @@ const handleEditPost = async () => {
                       </div>
                     </div>
                   </div>
-                ))} 
+                ))}
                 {/* Comment delete confirmation dialog (shared for all comments) */}
                 <AlertDialog
                   open={!!deleteDialogCommentId}
@@ -408,10 +491,10 @@ const handleEditPost = async () => {
               </div>
 
               {user ? (
-                <div className="flex space-x-3">    
-                {/* <Avatar className="size-8 flex-shrink-0">
+                <div className="flex space-x-3">
+                  {/* <Avatar className="size-8 flex-shrink-0">
                     <AvatarImage src={user?.imageUrl || "/avatar.png"} />
-                  </Avatar> */}                  
+                  </Avatar> */}
                   <div className="flex-1">
                     <Textarea
                       placeholder="Write a comment..."
@@ -457,5 +540,3 @@ const handleEditPost = async () => {
 }
 
 export default PostCard
-
-

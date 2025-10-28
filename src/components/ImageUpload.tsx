@@ -7,13 +7,16 @@ import { useState } from "react"
 interface ImageUploadProps {
   onchange: (url: string) => void
   value: string
-  endpoint: "postImage" | "profileImage"
+  endpoint: "postImage" | "profileImage" | "videoUploader"
 }
 export type { ImageUploadProps }
 
 const ImageUpload = ({ endpoint, onchange, value }: ImageUploadProps) => {
   const [fileKey, setFileKey] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [fileType, setFileType] = useState<string | null>(null)
+
+  const isVideo = () => fileType?.startsWith('video/')
 
   const handleDelete = async () => {
     if (fileKey) {
@@ -25,16 +28,30 @@ const ImageUpload = ({ endpoint, onchange, value }: ImageUploadProps) => {
     }
     onchange("")
     setFileKey(null)
+    setFileType(null)
   }
 
   if (value) {
     return (
       <div className="relative size-40">
-        <img
+        {/* <img
           src={value}
           alt="Upload"
           className="rounded-md size-40 object-cover"
-        />
+        /> */}
+        {isVideo() ? (
+          <video
+            src={value}
+            className="rounded-md size-40 object-cover"
+            controls
+          />
+        ) : (
+          <img
+            src={value}
+            alt="Upload"
+            className="rounded-md size-40 object-cover"
+          />
+        )}
         <button
           onClick={handleDelete}
           className="absolute top-0 right-0 p-1 bg-red-500 rounded-full shadow-sm"
@@ -66,6 +83,7 @@ const ImageUpload = ({ endpoint, onchange, value }: ImageUploadProps) => {
             if (res?.[0]) {
               onchange(res[0].url)
               setFileKey(res[0].key) // for deleting the file later
+              setFileType(res[0].type)
             }
           }}
           onUploadError={(error: Error) => {
@@ -97,11 +115,16 @@ const ImageUpload = ({ endpoint, onchange, value }: ImageUploadProps) => {
               "flex h-8 flex-col items-center justify-center px-2 text-white",
           }}
           onUploadBegin={() => setIsUploading(true)}
-          onClientUploadComplete={(res) => {
+          onClientUploadComplete={(res: Array<{
+            url: string;
+            key: string;
+            type: string;
+          }>) => {
             setIsUploading(false)
             if (res?.[0]) {
               onchange(res[0].url)
               setFileKey(res[0].key) // for deleting the file later
+              setFileType(res[0].type)
             }
           }}
           onUploadError={(error: Error) => {
